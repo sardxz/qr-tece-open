@@ -1,0 +1,363 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  username      String   @unique
+  passwordHash  String
+  gender        Gender
+  bio           String?
+  city          String?
+  state         String?
+  birthYear     Int?
+  profilePhrase String?
+  role                Role     @default(USER)
+  isActive            Boolean  @default(true)
+  isMuted             Boolean  @default(false)
+  profileImageUrl     String?
+  profileCoverUrl     String?
+  statusText          String?
+  manualStatus        ManualStatus?
+  lastSeenMentionsAt  DateTime?
+  lastActiveAt        DateTime?
+  termsAcceptedAt     DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  deletedAt           DateTime?
+  reputationScore     Int      @default(200)
+  bonusInvites        Int      @default(0)
+  invitedById         String?
+
+  posts               Post[]
+  sentDepos           Depo[]            @relation("DepoAuthor")
+  receivedDepos       Depo[]            @relation("DepoRecipient")
+  communities         CommunityMember[]
+  createdCommunities  Community[]
+  createdInvites      Invite[]          @relation("InviteCreator")
+  createdCommunityInvites CommunityInvite[] @relation("CommunityInviteCreator")
+  usedInvite          Invite?           @relation("InviteUser")
+  likes               Like[]
+  comments            Comment[]
+  sentFriendships      Friendship[]         @relation("FriendshipRequester")
+  receivedFriendships  Friendship[]         @relation("FriendshipReceiver")
+  siteUpdates          SiteUpdate[]
+  updateLikes          UpdateLike[]
+  passwordResetTokens  PasswordResetToken[]
+  showcaseItems        ShowcaseItem[]
+  topFriends           TopFriend[]          @relation("TopFriendOwner")
+  topFriendOf          TopFriend[]          @relation("TopFriendTarget")
+  userEvents           UserEvent[]
+  createdBadges        Badge[]              @relation("BadgeCreator")
+  invitedBy            User?                @relation("UserInviter", fields: [invitedById], references: [id])
+  invitedUsers         User[]               @relation("UserInviter")
+  reputationEvents     ReputationEvent[]
+  pushTokens           PushToken[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Gender {
+  H
+  M
+}
+
+enum ManualStatus {
+  ONLINE
+  BUSY
+  AWAY
+  OFFLINE
+}
+
+model Invite {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  createdById String
+  usedById    String?   @unique
+  createdAt   DateTime  @default(now())
+  usedAt      DateTime?
+  expiresAt   DateTime?
+
+  createdBy User  @relation("InviteCreator", fields: [createdById], references: [id])
+  usedBy    User? @relation("InviteUser", fields: [usedById], references: [id])
+}
+
+model Community {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  description   String?
+  coverImageUrl String
+  isPrivate     Boolean  @default(false)
+  rules         String?
+  maxMembers    Int?
+  createdById   String
+  createdAt     DateTime @default(now())
+
+  createdBy User              @relation(fields: [createdById], references: [id])
+  members   CommunityMember[]
+  posts     Post[]
+  invites   CommunityInvite[]
+}
+
+model CommunityInvite {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  communityId String
+  createdById String
+  usedCount   Int       @default(0)
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  createdBy User      @relation("CommunityInviteCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+  @@index([token])
+}
+
+model CommunityMember {
+  userId         String
+  communityId    String
+  role           MemberRole @default(MEMBER)
+  notifyNewPosts Boolean    @default(true)
+  joinedAt       DateTime   @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  community Community @relation(fields: [communityId], references: [id])
+
+  @@id([userId, communityId])
+}
+
+enum MemberRole {
+  MEMBER
+  MOD
+  OWNER
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  content     String
+  imageUrl    String?
+  authorId    String
+  communityId String?
+  replyToId   String?
+  repostOfId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author    User       @relation(fields: [authorId], references: [id])
+  community Community? @relation(fields: [communityId], references: [id])
+  replyTo   Post?      @relation("PostReplies", fields: [replyToId], references: [id])
+  replies   Post[]     @relation("PostReplies")
+  repostOf  Post?      @relation("PostReposts", fields: [repostOfId], references: [id], onDelete: Cascade)
+  reposts   Post[]     @relation("PostReposts")
+  likes     Like[]
+  comments  Comment[]
+
+  @@index([repostOfId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  authorId  String
+  postId    String
+  createdAt DateTime @default(now())
+
+  author User @relation(fields: [authorId], references: [id])
+  post   Post @relation(fields: [postId], references: [id])
+}
+
+model Like {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@id([userId, postId])
+}
+
+model Depo {
+  id          String     @id @default(cuid())
+  content     String
+  authorId    String
+  recipientId String
+  status      DepoStatus @default(PENDING)
+  createdAt   DateTime   @default(now())
+  approvedAt  DateTime?
+
+  author    User @relation("DepoAuthor", fields: [authorId], references: [id])
+  recipient User @relation("DepoRecipient", fields: [recipientId], references: [id])
+}
+
+enum DepoStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+}
+
+model SiteUpdate {
+  id        String     @id @default(cuid())
+  content   String
+  type      UpdateType @default(FEATURE)
+  authorId  String
+  createdAt DateTime   @default(now())
+
+  author User         @relation(fields: [authorId], references: [id])
+  likes  UpdateLike[]
+}
+
+model UpdateLike {
+  userId   String
+  updateId String
+  createdAt DateTime @default(now())
+
+  user   User       @relation(fields: [userId], references: [id])
+  update SiteUpdate @relation(fields: [updateId], references: [id])
+
+  @@id([userId, updateId])
+}
+
+enum UpdateType {
+  FEATURE
+  FIX
+  BUG
+}
+
+model Friendship {
+  id          String           @id @default(cuid())
+  requesterId String
+  receiverId  String
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id])
+  receiver  User @relation("FriendshipReceiver", fields: [receiverId], references: [id])
+
+  @@unique([requesterId, receiverId])
+}
+
+enum ShowcaseType {
+  BADGE
+  ITEM
+  COMMUNITY
+  MASCOT
+  EVENT
+  SPECIAL
+}
+
+model Badge {
+  id          String   @id @default(cuid())
+  name        String
+  iconUrl     String
+  rarity      String
+  totalSupply Int?
+  description String?
+  criteria    Json?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  createdBy User          @relation("BadgeCreator", fields: [createdById], references: [id])
+  awards    ShowcaseItem[]
+}
+
+model ShowcaseItem {
+  id            String       @id @default(cuid())
+  userId        String
+  type          ShowcaseType @default(BADGE)
+  name          String
+  iconUrl       String
+  rarity        String?
+  position      Int?
+  badgeId       String?
+  editionNumber Int?
+  totalSupply   Int?
+  createdAt     DateTime     @default(now())
+
+  user  User   @relation(fields: [userId], references: [id])
+  badge Badge? @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, position])
+}
+
+model TopFriend {
+  userId   String
+  friendId String
+  position Int
+
+  user   User @relation("TopFriendOwner", fields: [userId], references: [id])
+  friend User @relation("TopFriendTarget", fields: [friendId], references: [id])
+
+  @@id([userId, friendId])
+  @@unique([userId, position])
+}
+
+model UserEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+model ReputationEvent {
+  id           String   @id @default(cuid())
+  userId       String
+  delta        Int
+  reason       String
+  sourceUserId String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+enum PushPlatform {
+  ANDROID
+  IOS
+}
+
+model PushToken {
+  id        String       @id @default(cuid())
+  userId    String
+  token     String       @unique
+  platform  PushPlatform
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

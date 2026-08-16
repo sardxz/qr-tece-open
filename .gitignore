@@ -1,0 +1,75 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# uploads de usuários
+/uploads
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env
+.env.local
+.env.production
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+/src/generated/prisma
+
+# mobile app (Expo) — extras além do mobile/.gitignore
+/mobile/node_modules
+/mobile/.expo
+/mobile/dist
+/mobile/web-build
+/mobile/expo-env.d.ts
+/mobile/.env*.local
+
+# Documentos/config locais do Claude Code — não versionar em nenhum nível
+CLAUDE.md
+.claude/
+
+# Knowledge graph local (Graphify) — gerado por skill, não versionar
+graphify-out/
+.graphify_python
+
+# Notas de projeto locais
+.project/
+
+# Logs de dev
+.codex-*.log
+
+# Firebase: carrega a API key do projeto — cada dev baixa a sua do console
+google-services.json
+GoogleService-Info.plist
+

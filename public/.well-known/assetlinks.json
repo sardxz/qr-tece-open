@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.qrtece.app",
+      "sha256_cert_fingerprints": [
+        "78:38:0B:A6:79:A1:C8:33:19:99:A7:86:1C:3F:36:8D:7A:92:68:2B:32:24:C6:D2:BF:0E:06:24:96:83:15:CB",
+        "2A:DA:C6:5A:A4:AF:86:04:73:C9:02:60:1A:A3:0E:7B:FA:A7:66:DD:94:F8:DA:8B:A0:B1:9F:60:C4:87:30:08"
+      ]
+    }
+  }
+]

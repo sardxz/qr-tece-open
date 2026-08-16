@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: tece-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tece
+      POSTGRES_PASSWORD: tece_dev_pass
+      POSTGRES_DB: tecedb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_dev_data:
